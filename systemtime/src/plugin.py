@@ -1,5 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
 from . import _
 from enigma import eTimer, eDVBLocalTimeHandler, eEPGCache, getDesktop
 try:
@@ -17,7 +15,7 @@ from Screens.InputBox import InputBox
 from Screens.MessageBox import MessageBox
 from Screens.Standby import TryQuitMainloop
 from Screens.Screen import Screen
-from Tools.Directories import fileExists, resolveFilename, SCOPE_PLUGINS
+from Tools.Directories import fileExists
 from NTPSyncPoller import NTPSyncPoller
 import os
 import time
@@ -50,18 +48,18 @@ class SystemTimeSetupScreen(Screen, ConfigListScreen):
 			<widget name="key_green" position="175,0" size="175,33" font="Regular;17" halign="center" valign="center" transparent="1" />
 			<widget name="key_yellow" position="350,0" size="175,33" font="Regular;17" halign="center" valign="center" transparent="1" />
 			<widget name="key_blue" position="525,0" size="175,33" font="Regular;17" halign="center" valign="center" transparent="1" />
-			<ePixmap position="0,33" size="175,2" pixmap="~/images/red.png" alphatest="blend" />
-			<ePixmap position="175,33" size="175,2" pixmap="~/images/green.png" alphatest="blend" />
-			<ePixmap position="350,33" size="175,2" pixmap="~/images/yellow.png" alphatest="blend" />
-			<ePixmap position="525,33" size="175,2" pixmap="~/images/blue.png" alphatest="blend" />
+			<ePixmap position="0,33" size="175,2" pixmap="/usr/lib/enigma2/python/Plugins/SystemPlugins/SystemTime/images/red.png" alphatest="blend" />
+			<ePixmap position="175,33" size="175,2" pixmap="/usr/lib/enigma2/python/Plugins/SystemPlugins/SystemTime/images/green.png" alphatest="blend" />
+			<ePixmap position="350,33" size="175,2" pixmap="/usr/lib/enigma2/python/Plugins/SystemPlugins/SystemTime/images/yellow.png" alphatest="blend" />
+			<ePixmap position="525,33" size="175,2" pixmap="/usr/lib/enigma2/python/Plugins/SystemPlugins/SystemTime/images/blue.png" alphatest="blend" />
 			<widget name="config" scrollbarMode="showOnDemand" position="0,45" size="700,225" />
 			<widget name="description" position="5,290" size="690,75" font="Regular;17" />
-			<ePixmap pixmap="div-h.png" position="0,280" size="700,2" />
-			<ePixmap pixmap="div-h.png" position="0,362" size="700,2" />
+			<ePixmap pixmap="skin_default/div-h.png" position="0,280" size="700,2" />
+			<ePixmap pixmap="skin_default/div-h.png" position="0,362" size="700,2" />
 			<widget source="global.CurrentTime" render="Label" position="150,370" size="430,25" font="Regular;20" halign="left" transparent="1">
 				<convert type="ClockToText">Date</convert>
 			</widget>
-			<ePixmap alphatest="on" pixmap="icons/clock.png" position="590,375" size="14,14" />
+			<ePixmap alphatest="on" pixmap="skin_default/icons/clock.png" position="590,375" size="14,14" />
 			<widget source="global.CurrentTime" render="Label" position="610,370" size="55,25" font="Regular;20" halign="left" transparent="1">
 				<convert type="ClockToText">Default</convert>
 			</widget>
@@ -72,7 +70,6 @@ class SystemTimeSetupScreen(Screen, ConfigListScreen):
 
 	def __init__(self, session):
 		Screen.__init__(self, session)
-		self.skin_path = resolveFilename(SCOPE_PLUGINS, "SystemPlugins/SystemTime")
 		self.setTitle(_("System time setup"))
 		self.skinName = ["SystemTimeSetupScreen", "Setup"]
 		self.syncTimer = eTimer()
@@ -89,7 +86,7 @@ class SystemTimeSetupScreen(Screen, ConfigListScreen):
 			"save": self.keyGreen,
 			"cancel": self.cancel,
 			"red": self.keyRed,
-			"yellow": self.keyYellow,
+			"yellow":self.keyYellow,
 			"blue": self.keyBlue,
 			"left": self.keyLeft,
 			"right": self.keyRight,
@@ -224,12 +221,12 @@ class SystemTimeSetupScreen(Screen, ConfigListScreen):
 				cmd = "echo -e '#!/bin/sh\n\nsleep %s\n\n[ -x usr/sbin/ntpd ] && /usr/sbin/ntpd -dnqp %s\n\nexit 0' >> /etc/init.d/ntpdate" % (str(self.ST.wifi_delay.value), self.ST.ip.value)
 			if fileExists("/etc/init.d/ntpdate"):
 				os.chmod("/etc/init.d/ntpdate", 0755)
-				Console().ePopen("update-rc.d ntpdate defaults 99")
+				os.system("update-rc.d ntpdate defaults 99")
 			else:
-				Console().ePopen(cmd)
+				os.system(cmd)
 				if fileExists("/etc/init.d/ntpdate"):
 					os.chmod("/etc/init.d/ntpdate", 0755)
-					Console().ePopen("update-rc.d ntpdate defaults 99")
+					os.system("update-rc.d ntpdate defaults 99")
 				else:
 					self.ST.syncNTPcoldstart.value = False
 		else:
@@ -237,25 +234,25 @@ class SystemTimeSetupScreen(Screen, ConfigListScreen):
 			self.ST.syncNTPcoldstart.value = False
 
 	def removeNTPcoldstart(self):
-		Console().ePopen("update-rc.d -f ntpdate remove")
+		os.system("update-rc.d -f ntpdate remove")
 		if fileExists("/etc/init.d/ntpdate"):
-			Console().ePopen("rm -rf /etc/init.d/ntpdate")
+			os.system("rm -rf /etc/init.d/ntpdate")
 
 	def addUseRTC(self):
 		if fileExists("/etc/init.d/set-rtctime"):
 			os.chmod("/etc/init.d/set-rtctime", 0755)
-			Console().ePopen("update-rc.d set-rtctime defaults 40")
+			os.system("update-rc.d set-rtctime defaults 40")
 		else:
-			Console().ePopen("cp %s /etc/init.d/set-rtctime") % resolveFilename(SCOPE_PLUGINS, "SystemPlugins/SystemTime/set-rtctime")
+			os.system("cp /usr/lib/enigma2/python/Plugins/SystemPlugins/SystemTime/set-rtctime /etc/init.d/set-rtctime")
 			if fileExists("/etc/init.d/set-rtctime"):
 				os.chmod("/etc/init.d/set-rtctime", 0755)
-				Console().ePopen("update-rc.d set-rtctime defaults 40")
+				os.system("update-rc.d set-rtctime defaults 40")
 			else:
 				self.session.open(MessageBox, _("Script 'set-rtctime' not found!"), MessageBox.TYPE_ERROR, timeout=3)
 				self.ST.useRTCstart.value = False
 
 	def removeUseRTC(self):
-		Console().ePopen("update-rc.d -f set-rtctime remove")
+		os.system("update-rc.d -f set-rtctime remove")
 
 	def keyGreen(self):
 		if self.ST.syncNTPcoldstart.value:
@@ -401,7 +398,7 @@ class ChangeTimeWizzard(Screen):
 		if answer is False:
 			self.skipChangeTime(_("No confirmation given."))
 		else:
-			Console().ePopen("date %s" % self.newtime)
+			os.system("date %s" % (self.newtime))
 			nowTime = time.time()
 			if nowTime > 1514808000:
 				setRTCtime(nowTime)
@@ -420,7 +417,7 @@ class ChangeTimeWizzard(Screen):
 
 def removeNetworkStart():
 	if os.path.exists("/usr/bin/ntpdate-sync"):
-		Console().ePopen("rm -rf /usr/bin/ntpdate-sync && rm -rf /etc/network/if-up.d/ntpdate-sync")
+		os.system("rm -rf /usr/bin/ntpdate-sync && rm -rf /etc/network/if-up.d/ntpdate-sync")
 
 
 def startup(reason=0, **kwargs):
